@@ -1,25 +1,38 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import OrdersPage from './pages/OrdersPage';
+import ProductsPage from './pages/ProductsPage';
+import StatisticsPage from './pages/StatisticsPage';
+import WarehousePage from './pages/WarehousePage';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function App() {
+const App: React.FC = () => {
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if the user is logged in when the app loads
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+          <ProtectedRoute path="/" isLoggedIn={isLoggedIn}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
+            <Route path="/warehouse" element={<WarehousePage />} />
+          </ProtectedRoute>
+      </Routes>
+    </Router>
   );
 }
 
