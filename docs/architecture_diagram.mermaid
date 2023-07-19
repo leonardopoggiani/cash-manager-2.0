@@ -1,0 +1,21 @@
+```mermaid
+graph TB
+    subgraph Browser
+    Client[Client Browser]
+    end
+    subgraph Backend
+    BE[Backend Server]
+    DB[Database]
+    end
+    subgraph Frontend
+    FE[Frontend Server]
+    end
+
+    Client -->|HTTP/HTTPS Request| FE
+    FE -->|HTTP/HTTPS Request| BE
+    BE --> DB
+    DB --> BE
+    BE -->|HTTP/HTTPS Response| FE
+    FE -->|HTTP/HTTPS Response| Client
+
+```
