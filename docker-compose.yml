@@ -31,3 +31,9 @@ services:
       - POSTGRES_DB=database
     ports:
       - '5432:5432'
+  caddy:
+    image: caddy:builder-alpine
+    ports:
+      - '80:80'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
