@@ -9,6 +9,7 @@ import (
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/config"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/db"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/handlers"
+	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/routers"
 )
 
 func main() {
@@ -30,14 +31,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
-	defer dbConn.Close()
 
 	// Initialize handlers with dependencies
 	orderHandler := handlers.NewOrderHandler(dbConn)
 	healthCheckHandler := handlers.NewHealthCheckHandler()
 
 	// Routes
-	routes := NewRouter(orderHandler, healthCheckHandler)
+	routes := routers.NewRouter(orderHandler, healthCheckHandler)
 	routes.Setup(app)
 
 	// Start the server
