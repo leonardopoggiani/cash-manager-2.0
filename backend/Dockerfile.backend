@@ -1,14 +1,14 @@
 # Use the official Golang image
-FROM golang:latest
+FROM golang:1.21rc3
 
 # Set the working directory
 WORKDIR /app/backend
 
 # Copy the necessary files
-COPY ./backend /app/backend
+COPY . /app/backend
 
 # Build the backend binary
-RUN go build -o backend .
+RUN go build -o backend ./cmd/main.go
 
 # Expose the port
 EXPOSE 5000
