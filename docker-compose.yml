@@ -20,11 +20,11 @@ services:
       - DB_NAME=database
       - JWT_SECRET=a8f5f167f44f4964e6c998dee827110c
       - JWT_EXPIRATION=3600
-      - NODE_ENV=development
-      - PORT=3000
       - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+     - db
   db:
-    image: postgres:13
+    image: postgres:15
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
