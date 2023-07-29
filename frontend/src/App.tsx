@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import OrdersPage from './pages/OrdersPage';
@@ -19,20 +19,23 @@ const App: React.FC = () => {
     }
   }, []);
 
+  console.log("App started")
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<LoginPage />} />
-        <ProtectedRoute path="/" isLoggedIn={isLoggedIn}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/statistics" element={<StatisticsPage />} />
-          <Route path="/warehouse" element={<WarehousePage />} />
-        </ProtectedRoute>
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+        {isLoggedIn ? (
+          <>
+            <ProtectedRoute path="/home" isLoggedIn={isLoggedIn} element={<HomePage />} />
+            <ProtectedRoute path="/orders" isLoggedIn={isLoggedIn} element={<OrdersPage />} />
+            <ProtectedRoute path="/products" isLoggedIn={isLoggedIn} element={<ProductsPage />} />
+            <ProtectedRoute path="/statistics" isLoggedIn={isLoggedIn} element={<StatisticsPage />} />
+            <ProtectedRoute path="/warehouse" isLoggedIn={isLoggedIn} element={<WarehousePage />} />
+          </>
+        ) : (
+          <Route path="/" element={<Navigate to="/login" />} />
+        )}
+    </Routes>
   );
 }
 

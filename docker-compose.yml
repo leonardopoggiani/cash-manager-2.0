@@ -1,15 +1,31 @@
-version: '3.8'
+version: "3.8"
+
 services:
-  frontend:
+
+  webserver:
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend
+    environment:
+      - SITE_ADDRESS=${SITE_ADDRESS}
+    ports:
+      - 443:443
+      - 443:443/udp
+    restart: unless-stopped
+    volumes:
+      - ./caddy_data:/data
+      - caddy_config:/config
+    networks:
+      default:
+        aliases:
+          - webserver.local
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.backend
     ports:
-      - '5000:5000'
+      - "5000:5000"
     environment:
       - DB_HOST=db
       - DB_PORT=5432
@@ -19,8 +35,11 @@ services:
       - JWT_SECRET=a8f5f167f44f4964e6c998dee827110c
       - JWT_EXPIRATION=3600
       - CORS_ORIGIN=http://localhost:3000
+    restart: unless-stopped
     depends_on:
-     - db
+      db:
+        condition: service_healthy 
+        
   db:
     image: postgres:16beta2
     environment:
@@ -28,10 +47,12 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=cash-manager
     ports:
-      - '5432:5432'
-  caddy:
-    image: caddy:2.6.4-alpine
-    ports:
-      - '80:80'
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  caddy_config:

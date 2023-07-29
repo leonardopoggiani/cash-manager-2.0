@@ -1,18 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/config"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/db"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/handlers"
 )
 
 func main() {
+	// Load configuration from environment variables
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
 
 	// Create a new Fiber instance
 	app := fiber.New()
@@ -22,49 +26,21 @@ func main() {
 	app.Use(recover.New())
 
 	// Database connection
-	databaseURL := getDatabaseURL()
-	db, err := db.ConnectDB(databaseURL)
+	dbConn, err := db.ConnectDB(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
+	defer dbConn.Close()
 
-	// Handlers
-	orderHandler := handlers.NewOrderHandler(db)
+	// Initialize handlers with dependencies
+	orderHandler := handlers.NewOrderHandler(dbConn)
 	healthCheckHandler := handlers.NewHealthCheckHandler()
 
 	// Routes
-
-	// Health check
-	app.Get("/healtz", healthCheckHandler.GetHealthCheck)
-
-	// Order routes
-	app.Get("/orders", orderHandler.GetOrders)
-	app.Post("/orders", orderHandler.CreateOrder)
+	routes := NewRouter(orderHandler, healthCheckHandler)
+	routes.Setup(app)
 
 	// Start the server
-	port := getPort()
-	log.Printf("Server listening on port %s", port)
-	log.Fatal(app.Listen(":" + port))
-}
-
-func getDatabaseURL() string {
-	// Get the database connection information from environment variables
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
-
-	// Create the database connection URL
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
-
-	return dbURL
-}
-
-func getPort() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "5000"
-	}
-	return port
+	log.Printf("Server listening on port %s", cfg.Port)
+	log.Fatal(app.Listen(":" + cfg.Port))
 }

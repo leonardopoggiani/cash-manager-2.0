@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../style/login.css"; // Import the custom styles
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
