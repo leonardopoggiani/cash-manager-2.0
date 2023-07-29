@@ -1,13 +1,17 @@
-FROM denoland/deno:alpine-1.35.1
+# Use the official Golang image
+FROM golang:latest
 
-# Set the Working Directory
-WORKDIR /app
+# Set the working directory
+WORKDIR /app/backend
 
-# Copy the Project Files to Docker
-COPY ./src .
+# Copy the necessary files
+COPY ./backend /app/backend
 
-# Expose the port number that your app runs on
+# Build the backend binary
+RUN go build -o backend .
+
+# Expose the port
 EXPOSE 5000
 
-# Run your Program
-CMD ["run", "--allow-net", "--allow-read", "--allow-env", "server.ts"]
+# Run the backend server
+CMD ["./backend"]

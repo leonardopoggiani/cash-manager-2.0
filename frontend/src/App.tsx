@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import OrdersPage from './pages/OrdersPage';
@@ -9,7 +9,6 @@ import WarehousePage from './pages/WarehousePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const App: React.FC = () => {
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check if the user is logged in when the app loads
@@ -23,14 +22,15 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginPage />} />
-          <ProtectedRoute path="/" isLoggedIn={isLoggedIn}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/statistics" element={<StatisticsPage />} />
-            <Route path="/warehouse" element={<WarehousePage />} />
-          </ProtectedRoute>
+        <ProtectedRoute path="/" isLoggedIn={isLoggedIn}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/statistics" element={<StatisticsPage />} />
+          <Route path="/warehouse" element={<WarehousePage />} />
+        </ProtectedRoute>
       </Routes>
     </Router>
   );

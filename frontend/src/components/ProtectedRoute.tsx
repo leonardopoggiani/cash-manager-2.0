@@ -1,19 +1,17 @@
 import React from 'react';
-import { Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
+import LoginPage from '../pages/LoginPage';
 
 interface ProtectedRouteProps {
-  isLoggedIn: boolean;
   path: string;
-  children: React.ReactNode;
+  isLoggedIn: boolean;
+  element: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, isLoggedIn, ...rest }) => {
-  const location = useLocation();
-
-  return (
-    <Route {...rest}>
-      {isLoggedIn ? children : <Navigate to="/login" state={{ from: location }} replace />}
-    </Route>
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ path, isLoggedIn, element }) => {
+  return isLoggedIn ? (
+    <Route path="/login" element={<LoginPage />} /> ) : (
+    <Navigate to="/login" replace />
   );
 };
 
