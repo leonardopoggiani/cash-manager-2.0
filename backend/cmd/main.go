@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+
 	// Create a new Fiber instance
 	app := fiber.New()
 
@@ -28,8 +30,14 @@ func main() {
 
 	// Handlers
 	orderHandler := handlers.NewOrderHandler(db)
+	healthCheckHandler := handlers.NewHealthCheckHandler()
 
 	// Routes
+
+	// Health check
+	app.Get("/healtz", healthCheckHandler.GetHealthCheck)
+
+	// Order routes
 	app.Get("/orders", orderHandler.GetOrders)
 	app.Post("/orders", orderHandler.CreateOrder)
 
@@ -40,13 +48,23 @@ func main() {
 }
 
 func getDatabaseURL() string {
-	return "postgres://<db_user>:<db_password>@<db_host>:<db_port>/<db_name>?sslmode=disable"
+	// Get the database connection information from environment variables
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	// Create the database connection URL
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
+
+	return dbURL
 }
 
 func getPort() string {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "5000"
 	}
 	return port
 }
