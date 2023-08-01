@@ -6,37 +6,37 @@ import OrdersPage from './pages/OrdersPage';
 import ProductsPage from './pages/ProductsPage';
 import StatisticsPage from './pages/StatisticsPage';
 import WarehousePage from './pages/WarehousePage';
-import ProtectedRoute from './components/ProtectedRoute';
+import RegisterPage from './pages/RegisterPage';
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  // Check if the user is logged in when the app loads
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      setIsLoggedIn(true);
-    }
+    setIsLoggedIn(Boolean(token));
+    console.log("token: " + token)
   }, []);
 
-  console.log("App started")
+  // Wait until the auth status has been determined
+  if (isLoggedIn === null) {
+    return null;
+  } else {
+  }
 
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-        {isLoggedIn ? (
-          <>
-            <ProtectedRoute path="/home" isLoggedIn={isLoggedIn} element={<HomePage />} />
-            <ProtectedRoute path="/orders" isLoggedIn={isLoggedIn} element={<OrdersPage />} />
-            <ProtectedRoute path="/products" isLoggedIn={isLoggedIn} element={<ProductsPage />} />
-            <ProtectedRoute path="/statistics" isLoggedIn={isLoggedIn} element={<StatisticsPage />} />
-            <ProtectedRoute path="/warehouse" isLoggedIn={isLoggedIn} element={<WarehousePage />} />
-          </>
-        ) : (
-          <Route path="/" element={<Navigate to="/login" />} />
-        )}
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/home" element={isLoggedIn ? <HomePage /> : <Navigate to="/login" />} />
+      <Route path="/orders" element={isLoggedIn ? <OrdersPage /> : <Navigate to="/login" />} />
+      <Route path="/products" element={isLoggedIn ? <ProductsPage /> : <Navigate to="/login" />} />
+      <Route path="/statistics" element={isLoggedIn ? <StatisticsPage /> : <Navigate to="/login" />} />
+      <Route path="/warehouse" element={isLoggedIn ? <WarehousePage /> : <Navigate to="/login" />} />
+      <Route path="/" element={<Navigate to={isLoggedIn ? "/home" : "/login"} />} />
+      <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
 }
 
 export default App;
+

@@ -1,7 +1,12 @@
 package models
 
+import "gorm.io/gorm"
+
 type Order struct {
-	ID           uint   `gorm:"primaryKey"`
-	CustomerName string `gorm:"not null"`
-	Amount       uint   `gorm:"not null"`
+	gorm.Model
+	Name       string
+	Plates     []Plate `gorm:"many2many:order_plates;"`
+	Price      float32
+	IsGratis   bool
+	IsTakeAway bool
 }

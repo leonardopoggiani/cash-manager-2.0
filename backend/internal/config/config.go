@@ -2,7 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -11,6 +14,22 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	env := os.Getenv("GO_ENV")
+	fmt.Println(env)
+
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(dir)
+
+	if env == "development" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatalf("error loading .env file: %v", err)
+		}
+	}
+
 	// Get the database connection information from environment variables
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")

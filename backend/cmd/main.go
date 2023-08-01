@@ -4,12 +4,13 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/config"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/db"
 	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/handlers"
-	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/routers"
+	"github.com/leonardopoggiani/cash-manager-2.0/backend/internal/router"
 )
 
 func main() {
@@ -22,6 +23,13 @@ func main() {
 	// Create a new Fiber instance
 	app := fiber.New()
 
+	app.Use(cors.New(cors.Config{
+		AllowCredentials: true,
+		AllowOrigins:     "http://localhost:3000",
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH",
+		AllowHeaders:     "Origin, Content-Type, Accept",
+	}))
+
 	// Middleware
 	app.Use(logger.New())
 	app.Use(recover.New())
@@ -33,11 +41,13 @@ func main() {
 	}
 
 	// Initialize handlers with dependencies
-	orderHandler := handlers.NewOrderHandler(dbConn)
+	ordersHandler := handlers.NewOrdersHandler(dbConn)
 	healthCheckHandler := handlers.NewHealthCheckHandler()
+	loginHandler := handlers.NewLoginHandler(dbConn)
+	registerHandler := handlers.NewRegisterHandler(dbConn)
 
 	// Routes
-	routes := routers.NewRouter(orderHandler, healthCheckHandler)
+	routes := router.NewRouter(ordersHandler, healthCheckHandler, loginHandler, registerHandler)
 	routes.Setup(app)
 
 	// Start the server
