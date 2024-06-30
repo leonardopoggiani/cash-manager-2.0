@@ -1,7 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-const categories = ['Antipasti', 'Primi', 'Secondi', 'Dolci', 'Pizze', 'Bevande', 'Altro'];
-
 async function loadInventory() {
   try {
     const items = await ipcRenderer.invoke('getInventory');
@@ -65,6 +63,7 @@ function createCategoryTable(categoria, items) {
           <th>Nome</th>
           <th>Quantità</th>
           <th>Prezzo</th>
+          <th>Azioni</th>
       </tr>
   `;
   table.appendChild(thead);
@@ -76,6 +75,11 @@ function createCategoryTable(categoria, items) {
           <td>${item.nome || 'Nome sconosciuto'}</td>
           <td>${typeof item.quantita === 'number' ? item.quantita : 'N/D'}</td>
           <td>${typeof item.prezzo === 'number' ? `€${item.prezzo.toFixed(2)}` : 'N/D'}</td>
+          <td>
+              <button class="edit-item" data-id="${item.id}">Modifica</button>
+              <button class="update-quantity" data-id="${item.id}">Aggiorna Quantità</button>
+              <button class="delete-item" data-id="${item.id}">Elimina</button>
+          </td>
       `;
     tbody.appendChild(tr);
   });
@@ -103,6 +107,161 @@ function updateItemDropdown(items) {
     });
   }
 }
+
+async function editMenuItem(itemId) {
+  console.log('Opening edit dialog for item:', itemId);
+
+  try {
+    const item = await ipcRenderer.invoke('getMenuItem', itemId);
+    if (!item) {
+      console.error('Menu item not found');
+      return;
+    }
+
+    const dialog = document.createElement('div');
+    dialog.id = 'editMenuItemDialog';
+    dialog.style.position = 'fixed';
+    dialog.style.top = '0';
+    dialog.style.left = '0';
+    dialog.style.width = '100%';
+    dialog.style.height = '100%';
+    dialog.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    dialog.style.display = 'flex';
+    dialog.style.alignItems = 'center';
+    dialog.style.justifyContent = 'center';
+
+    dialog.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 5px;">
+        <h3>Modifica Articolo</h3>
+        <input type="text" id="editItemName" value="${item.nome}" placeholder="Nome articolo">
+        <input type="number" id="editItemPrice" value="${item.prezzo}" step="0.01" placeholder="Prezzo">
+        <input type="number" id="editItemQuantity" value="${item.quantita}" placeholder="Quantità">
+        <select id="editItemCategory">
+          <option value="Antipasti" ${item.categoria === 'Antipasti' ? 'selected' : ''}>Antipasti</option>
+          <option value="Dolci" ${item.categoria === 'Dolci' ? 'selected' : ''}>Dolci</option>
+          <option value="Pizze" ${item.categoria === 'Pizze' ? 'selected' : ''}>Pizze</option>
+          <option value="Bevande" ${item.categoria === 'Bevande' ? 'selected' : ''}>Bevande</option>
+          <option value="Primi" ${item.categoria === 'Primi' ? 'selected' : ''}>Primi</option>
+          <option value="Secondi" ${item.categoria === 'Secondi' ? 'selected' : ''}>Secondi</option>
+          <option value="Altro" ${item.categoria === 'Altro' ? 'selected' : ''}>Altro</option>
+        </select>
+        <button id="confirmEdit">Conferma</button>
+        <button id="cancelEdit">Annulla</button>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const confirmEditHandler = async () => {
+      const nome = document.getElementById('editItemName').value;
+      const prezzo = parseFloat(document.getElementById('editItemPrice').value);
+      const quantita = parseInt(document.getElementById('editItemQuantity').value);
+      const categoria = document.getElementById('editItemCategory').value;
+
+      try {
+        const result = await ipcRenderer.invoke('updateMenuItem', {
+          id: itemId,
+          nome,
+          prezzo,
+          quantita,
+          categoria,
+        });
+
+        if (result.success) {
+          await loadInventory();
+          removeDialog();
+        } else {
+          console.error('Error updating menu item:', result.error);
+          alert(`Errore durante l'aggiornamento dell'articolo: ${result.error}`);
+        }
+      } catch (error) {
+        console.error('Error updating menu item:', error);
+        alert(`Errore durante l'aggiornamento dell'articolo: ${error.message}`);
+      }
+    };
+
+    const cancelEditHandler = () => {
+      removeDialog();
+    };
+
+    const removeDialog = () => {
+      document.getElementById('confirmEdit').removeEventListener('click', confirmEditHandler);
+      document.getElementById('cancelEdit').removeEventListener('click', cancelEditHandler);
+      document.body.removeChild(dialog);
+    };
+
+    document.getElementById('confirmEdit').addEventListener('click', confirmEditHandler);
+    document.getElementById('cancelEdit').addEventListener('click', cancelEditHandler);
+  } catch (error) {
+    console.error('Error editing menu item:', error);
+    alert("Errore durante la modifica dell'articolo.");
+  }
+}
+
+function updateMenuItemQuantity(itemId) {
+  console.log('Opening quantity update dialog for item:', itemId);
+
+  const dialog = document.createElement('div');
+  dialog.id = 'updateQuantityDialog';
+  dialog.style.position = 'fixed';
+  dialog.style.top = '0';
+  dialog.style.left = '0';
+  dialog.style.width = '100%';
+  dialog.style.height = '100%';
+  dialog.style.backgroundColor = 'rgba(0,0,0,0.5)';
+  dialog.style.display = 'flex';
+  dialog.style.alignItems = 'center';
+  dialog.style.justifyContent = 'center';
+
+  dialog.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 5px;">
+          <h3>Aggiorna Quantità</h3>
+          <input type="number" id="newQuantity" min="0" step="1">
+          <button id="confirmQuantity">Conferma</button>
+          <button id="cancelQuantity">Annulla</button>
+      </div>
+  `;
+
+  document.body.appendChild(dialog);
+
+  const confirmQuantityHandler = async () => {
+    const quantity = parseInt(document.getElementById('newQuantity').value);
+    if (isNaN(quantity)) {
+      alert('Per favore, inserisci un numero valido.');
+      return;
+    }
+    try {
+      const result = await ipcRenderer.invoke('updateMenuItemQuantity', {
+        id: itemId,
+        quantita: quantity,
+      });
+      if (result.success) {
+        await loadInventory();
+        removeDialog();
+      } else {
+        console.error('Error updating menu item quantity:', result.error);
+        alert(`Errore durante l'aggiornamento della quantità: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error updating menu item quantity:', error);
+      alert(`Errore durante l'aggiornamento della quantità: ${error.message}`);
+    }
+  };
+
+  const cancelQuantityHandler = () => {
+    removeDialog();
+  };
+
+  const removeDialog = () => {
+    document.getElementById('confirmQuantity').removeEventListener('click', confirmQuantityHandler);
+    document.getElementById('cancelQuantity').removeEventListener('click', cancelQuantityHandler);
+    document.body.removeChild(dialog);
+  };
+
+  document.getElementById('confirmQuantity').addEventListener('click', confirmQuantityHandler);
+  document.getElementById('cancelQuantity').addEventListener('click', cancelQuantityHandler);
+}
+
 async function addItem(e) {
   e.preventDefault();
   const nome = document.getElementById('itemName').value;
@@ -123,20 +282,29 @@ async function updateQuantity(e) {
   e.target.reset();
 }
 
+async function deleteMenuItem(itemId) {
+  if (confirm('Sei sicuro di voler eliminare questo articolo?')) {
+    try {
+      const result = await ipcRenderer.invoke('deleteMenuItem', itemId);
+      if (result.success) {
+        await loadInventory();
+      } else {
+        console.error('Error deleting menu item:', result.error);
+        alert(`Errore durante l'eliminazione dell'articolo: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      alert(`Errore durante l'eliminazione dell'articolo: ${error.message}`);
+    }
+  }
+}
+
 function initializeMagazzino() {
   console.log('Initializing Magazzino module');
 
   const addItemForm = document.getElementById('addItemForm');
-  const updateQuantityForm = document.getElementById('updateQuantityForm');
   const refreshInventoryBtn = document.getElementById('refreshInventoryBtn');
-  const itemCategorySelect = document.getElementById('itemCategory');
-
-  categories.forEach((category) => {
-    const option = document.createElement('option');
-    option.value = category;
-    option.textContent = category;
-    itemCategorySelect.appendChild(option);
-  });
+  const inventoryContainer = document.getElementById('inventoryContainer');
 
   if (addItemForm) {
     addItemForm.addEventListener('submit', addItem);
@@ -145,18 +313,34 @@ function initializeMagazzino() {
     console.error('addItemForm not found');
   }
 
-  if (updateQuantityForm) {
-    updateQuantityForm.addEventListener('submit', updateQuantity);
-    console.log('Added event listener to updateQuantityForm');
-  } else {
-    console.error('updateQuantityForm not found');
-  }
-
   if (refreshInventoryBtn) {
     refreshInventoryBtn.addEventListener('click', loadInventory);
     console.log('Added event listener to refreshInventoryBtn');
   } else {
     console.error('refreshInventoryBtn not found');
+  }
+
+  if (inventoryContainer) {
+    inventoryContainer.addEventListener('click', (event) => {
+      const target = event.target;
+      if (target.tagName !== 'BUTTON') return; // Only handle button clicks
+
+      const itemId = parseInt(target.getAttribute('data-id'), 10);
+      if (isNaN(itemId)) return;
+
+      if (target.classList.contains('edit-item')) {
+        editMenuItem(itemId);
+      } else if (target.classList.contains('update-quantity')) {
+        updateMenuItemQuantity(itemId);
+      } else if (target.classList.contains('delete-item')) {
+        deleteMenuItem(itemId);
+      }
+
+      event.stopPropagation(); // Prevent event from bubbling up
+    });
+    console.log('Added event listeners for edit, update quantity, and delete buttons');
+  } else {
+    console.error('inventoryContainer not found');
   }
 
   console.log('Loading initial inventory');

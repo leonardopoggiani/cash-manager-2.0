@@ -78,7 +78,28 @@
       <div id="menuContainer"></div>
     </div>
     <div id="ordiniModule" style="display:none;">
-      <!-- Placeholder for Ordini module -->
+      <h2>Gestione Ordini</h2>
+      <div id="newOrderForm">
+        <h3>Nuovo Ordine</h3>
+        <select id="dishSelect">
+          <option value="">Seleziona un piatto</option>
+          ${menuItems.map(item => `<option value="${item.id}" data-price="${item.prezzo}">${item.nome} -
+            €${item.prezzo.toFixed(2)}</option>`).join('')}
+        </select>
+        <input type="number" id="itemQuantity" min="1" value="1" step="1">
+        <button id="addToOrderBtn">Aggiungi all'ordine</button>
+      </div>
+      <div id="currentOrder">
+        <h3>Ordine Corrente</h3>
+        <ul id="orderItems"></ul>
+        <p>Totale: €<span id="orderTotal">0.00</span></p>
+        <button id="submitOrderBtn">Invia Ordine</button>
+      </div>
+      <div id="orderList">
+        <h3>Lista Ordini</h3>
+        <ul id="orderListItems"></ul>
+      </div>
+      <div id="orderDetails" style="display:none;"></div>
     </div>
     <div id="statisticheModule" style="display:none;">
       <!-- Placeholder for Statistiche module -->

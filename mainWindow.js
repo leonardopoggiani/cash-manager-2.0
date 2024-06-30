@@ -1,20 +1,28 @@
 const { initializeMagazzino } = require('./magazzino.js');
 const { initializeMenu } = require('./menu.js');
+const { initializeOrdini } = require('./ordini.js');
+const { ipcRenderer } = require('electron');
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const userInfo = document.getElementById('userInfo');
   userInfo.textContent = `Benvenuto, ${currentUser.username} (${currentUser.role})`;
 
-  document.getElementById('ordiniBtn').addEventListener('click', () => loadModule('ordini'));
-  document.getElementById('menuBtn').addEventListener('click', () => loadModule('menu'));
-  document.getElementById('magazzinoBtn').addEventListener('click', () => loadModule('magazzino'));
+  document
+    .getElementById('ordiniBtn')
+    .addEventListener('click', async () => await loadModule('ordini'));
+  document
+    .getElementById('menuBtn')
+    .addEventListener('click', async () => await loadModule('menu'));
+  document
+    .getElementById('magazzinoBtn')
+    .addEventListener('click', async () => await loadModule('magazzino'));
   document
     .getElementById('statisticheBtn')
-    .addEventListener('click', () => loadModule('statistiche'));
+    .addEventListener('click', async () => await loadModule('statistiche'));
   document.getElementById('logoutBtn').addEventListener('click', logout);
 
   // Load the default module (e.g., 'magazzino')
-  loadModule('magazzino');
+  await loadModule('magazzino');
 });
 
 function loadModule(moduleName) {
@@ -43,8 +51,10 @@ function loadModule(moduleName) {
         initializeMenu();
         break;
       case 'ordini':
+        initializeOrdini();
+        break;
       case 'statistiche':
-        // Display a "Not implemented" message for these modules
+        // Display a "Not implemented" message for this module
         selectedModule.innerHTML = `<h2>Modulo ${moduleName}</h2><p>Questo modulo non è ancora implementato.</p>`;
         break;
       default:
@@ -58,8 +68,16 @@ function loadModule(moduleName) {
 }
 
 function logout() {
-  // Implement logout functionality
-  console.log('Logout clicked');
+  ipcRenderer
+    .invoke('logout')
+    .then(() => {
+      // Redirect to login page or close the window
+      window.location.href = 'index.html';
+    })
+    .catch((error) => {
+      console.error('Error during logout:', error);
+      alert('Error during logout. Please try again.');
+    });
 }
 
 // Make sure currentUser is defined

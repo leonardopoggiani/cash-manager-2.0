@@ -1,23 +1,33 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../database/database');
+const { Model, DataTypes } = require('sequelize');
 
-const Order = sequelize.define('Order', {
-  nomeCliente: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  asporto: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  gratis: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  totale: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
-});
+module.exports = (sequelize) => {
+  class Order extends Model {}
 
-module.exports = Order;
+  Order.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      status: {
+        type: DataTypes.ENUM('pending', 'completed', 'cancelled'),
+        defaultValue: 'pending',
+      },
+      total: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      date: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+    },
+    {
+      sequelize,
+      modelName: 'Order',
+    }
+  );
+
+  return Order;
+};
