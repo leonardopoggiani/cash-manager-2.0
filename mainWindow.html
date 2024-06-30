@@ -1,44 +1,75 @@
 <!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cash Manager 2.0 - Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cash Manager 2.0 - Dashboard</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
-  <body>
-    <h1>Dashboard Cash Manager 2.0</h1>
-    <div id="userInfo"></div>
-    <nav>
-      <button id="ordiniBtn">Gestione Ordini</button>
-      <button id="menuBtn">Gestione Menu</button>
-      <button id="magazzinoBtn">Magazzino</button>
-      <button id="statisticheBtn">Statistiche</button>
-      <button id="logoutBtn">Logout</button>
-    </nav>
-    <div id="content">
-      <div id="magazzinoModule" style="display:none;">
-        <h2>Gestione Magazzino</h2>
-        <form id="addItemForm">
-          <input type="text" id="itemName" placeholder="Nome articolo" required />
-          <input type="number" id="itemPrice" placeholder="Prezzo" step="0.01" required />
-          <input type="number" id="itemQuantity" placeholder="Quantità" required />
-          <select id="itemCategory" required>
-            <option value="">Seleziona categoria</option>
-          </select>
-          <button type="submit">Aggiungi Articolo</button>
-        </form>
-        <form id="updateQuantityForm">
-          <select id="updateItemSelect" required>
-            <option value="">Seleziona articolo</option>
-          </select>
-          <input type="number" id="updateItemQuantity" placeholder="Nuova quantità" required />
-          <button type="submit">Aggiorna Quantità</button>
-        </form>
-        <h3>Inventario</h3>
-        <button id="refreshInventoryBtn">Aggiorna Inventario</button>
-        <div id="inventoryContainer"></div>
+
+<body>
+  <h1>Dashboard Cash Manager 2.0</h1>
+  <div id="userInfo"></div>
+  <nav>
+    <button id="ordiniBtn">Gestione Ordini</button>
+    <button id="menuBtn">Gestione Menu</button>
+    <button id="magazzinoBtn">Magazzino</button>
+    <button id="statisticheBtn">Statistiche</button>
+    <button id="logoutBtn">Logout</button>
+  </nav>
+  <div id="content">
+    <div id="magazzinoModule" style="display:none;">
+      <h2>Gestione Magazzino</h2>
+      <form id="addItemForm">
+        <input type="text" id="itemName" placeholder="Nome articolo" required />
+        <input type="number" id="itemPrice" placeholder="Prezzo" step="0.01" required />
+        <input type="number" id="itemQuantity" placeholder="Quantità" required />
+        <select id="itemCategory" required>
+          <option value="">Seleziona categoria</option>
+        </select>
+        <button type="submit">Aggiungi Articolo</button>
+      </form>
+      <form id="updateQuantityForm">
+        <select id="updateItemSelect" required>
+          <option value="">Seleziona articolo</option>
+        </select>
+        <input type="number" id="updateItemQuantity" placeholder="Nuova quantità" required />
+        <button type="submit">Aggiorna Quantità</button>
+      </form>
+      <h3>Inventario</h3>
+      <button id="refreshInventoryBtn">Aggiorna Inventario</button>
+      <div id="inventoryContainer"></div>
+    </div>
+    <div id="menuModule" style="display:none;">
+      <h2>Gestione Menu</h2>
+      <form id="addDishForm">
+        <input type="text" id="dishName" placeholder="Nome piatto" required>
+        <input type="number" id="dishPrice" placeholder="Prezzo" step="0.01" required>
+        <select id="dishCategory" required>
+          <option value="">Seleziona categoria</option>
+          <option value="Antipasti">Antipasti</option>
+          <option value="Primi">Primi</option>
+          <option value="Secondi">Secondi</option>
+          <option value="Dolci">Dolci</option>
+          <option value="Pizze">Pizze</option>
+          <option value="Bevande">Bevande</option>
+          <option value="Altro">Altro</option>
+        </select>
+        <textarea id="dishDescription" placeholder="Descrizione (opzionale)"></textarea>
+        <button type="submit">Aggiungi Piatto</button>
+      </form>
+      <h3>Menu</h3>
+      <button id="refreshMenuBtn">Aggiorna Menu</button>
+      <div id="menuContainer"></div>
+    </div>
+    <div id="ordiniModule" style="display:none;">
+      <!-- Placeholder for Ordini module -->
+    </div>
+    <div id="statisticheModule" style="display:none;">
+      <!-- Placeholder for Statistiche module -->
     </div>
     <script src="mainWindow.js"></script>
-  </body>
+</body>
+
 </html>

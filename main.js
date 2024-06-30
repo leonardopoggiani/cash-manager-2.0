@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const sequelize = require('./database/database');
 const { authenticateUser } = require('./auth/auth');
-const MenuItem = require('./models/MenuItem');
+const { Dish, MenuItem, checkAssociations } = require('./models');
 
 let mainWindow;
 let currentUser = null;
@@ -21,6 +21,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   try {
+    await checkAssociations();
     await sequelize.authenticate();
     console.log('Connessione al database stabilita con successo.');
     createWindow();
@@ -97,6 +98,50 @@ ipcMain.handle('updateMenuItemQuantity', async (event, { nome, quantita }) => {
     }
   } catch (error) {
     console.error('Error updating menu item quantity:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('getMenu', async () => {
+  try {
+    await checkAssociations(); // Check associations before querying
+    const dishes = await Dish.findAll({
+      include: [
+        {
+          model: MenuItem,
+          as: 'menuItems',
+          through: { attributes: ['quantita'] },
+        },
+      ],
+    });
+    return dishes.map((dish) => dish.toJSON());
+  } catch (error) {
+    console.error('Error fetching menu:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('addDish', async (event, dishData) => {
+  try {
+    const dish = await Dish.create(dishData);
+    return { success: true, dish: dish.toJSON() };
+  } catch (error) {
+    console.error('Error adding dish:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('toggleDishAvailability', async (event, dishId) => {
+  try {
+    const dish = await Dish.findByPk(dishId);
+    if (dish) {
+      dish.disponibile = !dish.disponibile;
+      await dish.save();
+      return { success: true };
+    }
+    return { success: false, error: 'Dish not found' };
+  } catch (error) {
+    console.error('Error toggling dish availability:', error);
     return { success: false, error: error.message };
   }
 });

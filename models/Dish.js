@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../database/database');
 
-const MenuItem = sequelize.define('MenuItem', {
+const Dish = sequelize.define('Dish', {
   nome: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -10,20 +10,19 @@ const MenuItem = sequelize.define('MenuItem', {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
-  quantita: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
   categoria: {
     type: DataTypes.ENUM('Antipasti', 'Primi', 'Secondi', 'Dolci', 'Pizze', 'Bevande', 'Altro'),
     allowNull: false,
   },
-  isCommonDependency: {
+  disponibile: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
-    defaultValue: false,
+    defaultValue: true,
+  },
+  descrizione: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
 });
 
-module.exports = MenuItem;
+module.exports = Dish;

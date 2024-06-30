@@ -1,12 +1,12 @@
-const sequelize = require('./database/database');
+const { sequelize, Dish, MenuItem } = require('./models');
 const { createUser } = require('./auth/auth');
-const MenuItem = require('./models/MenuItem'); // Make sure this line is present
 
 async function initDb() {
   try {
     await sequelize.sync({ alter: true });
     console.log('Database sincronizzato e alterato con successo.');
 
+    // Create users as before...
     const adminResult = await createUser('admin', 'password', 'Admin');
     if (adminResult.success) {
       console.log('Utente admin creato con successo.');
@@ -28,6 +28,29 @@ async function initDb() {
       { nome: 'Insalata Mista', prezzo: 5.0, quantita: 40, categoria: 'Contorni' },
     ]);
     console.log('Menu items di esempio creati con successo.');
+
+    // Add some sample dishes
+    await Dish.bulkCreate([
+      {
+        nome: 'Pizza Margherita',
+        prezzo: 8.5,
+        categoria: 'Pizze',
+        descrizione: 'Pomodoro, mozzarella, basilico',
+      },
+      {
+        nome: 'Spaghetti alla Carbonara',
+        prezzo: 10.0,
+        categoria: 'Primi',
+        descrizione: 'Uova, guanciale, pecorino, pepe nero',
+      },
+      {
+        nome: 'Tiramisù',
+        prezzo: 5.0,
+        categoria: 'Dolci',
+        descrizione: 'Savoiardi, mascarpone, caffè, cacao',
+      },
+    ]);
+    console.log('Piatti di esempio creati con successo.');
   } catch (error) {
     console.error("Errore durante l'inizializzazione del database:", error);
   } finally {
