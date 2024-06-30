@@ -57,6 +57,20 @@
           <option value="Altro">Altro</option>
         </select>
         <textarea id="dishDescription" placeholder="Descrizione (opzionale)"></textarea>
+        <div>
+          <label>
+            <input type="checkbox" id="dishCommonDependency">
+            Ha dipendenza comune (es. impasto pizza)
+          </label>
+        </div>
+        <div id="ingredientContainer">
+          <h4>Ingredienti</h4>
+          <select id="ingredientSelect">
+            <option value="">Seleziona ingrediente</option>
+          </select>
+          <input type="number" id="ingredientQuantity" min="1" placeholder="Quantità">
+          <button type="button" id="addIngredientBtn">Aggiungi Ingrediente</button>
+        </div>
         <button type="submit">Aggiungi Piatto</button>
       </form>
       <h3>Menu</h3>

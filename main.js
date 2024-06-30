@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const sequelize = require('./database/database');
 const { authenticateUser } = require('./auth/auth');
-const { Dish, MenuItem, checkAssociations } = require('./models');
+const { Dish, MenuItem, DishMenuItem, checkAssociations } = require('./models');
 
 let mainWindow;
 let currentUser = null;
@@ -104,13 +104,12 @@ ipcMain.handle('updateMenuItemQuantity', async (event, { nome, quantita }) => {
 
 ipcMain.handle('getMenu', async () => {
   try {
-    await checkAssociations(); // Check associations before querying
     const dishes = await Dish.findAll({
       include: [
         {
           model: MenuItem,
           as: 'menuItems',
-          through: { attributes: ['quantita'] },
+          through: { attributes: ['quantita', 'isCommonDependency'] },
         },
       ],
     });
@@ -121,9 +120,30 @@ ipcMain.handle('getMenu', async () => {
   }
 });
 
+ipcMain.handle('getMenuItems', async () => {
+  try {
+    const menuItems = await MenuItem.findAll();
+    return menuItems.map((item) => item.toJSON());
+  } catch (error) {
+    console.error('Error fetching menu items:', error);
+    return [];
+  }
+});
+
 ipcMain.handle('addDish', async (event, dishData) => {
   try {
-    const dish = await Dish.create(dishData);
+    const { nome, prezzo, categoria, descrizione, hasCommonDependency, ingredients } = dishData;
+    const dish = await Dish.create({ nome, prezzo, categoria, descrizione, hasCommonDependency });
+
+    for (const ingredient of ingredients) {
+      await DishMenuItem.create({
+        DishId: dish.id,
+        MenuItemId: ingredient.itemId,
+        quantita: ingredient.quantity,
+        isCommonDependency: hasCommonDependency,
+      });
+    }
+
     return { success: true, dish: dish.toJSON() };
   } catch (error) {
     console.error('Error adding dish:', error);

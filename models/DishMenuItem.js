@@ -7,6 +7,11 @@ const DishMenuItem = sequelize.define('DishMenuItem', {
     allowNull: false,
     defaultValue: 1,
   },
+  isCommonDependency: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 });
 
 module.exports = DishMenuItem;

@@ -23,6 +23,11 @@ const Dish = sequelize.define('Dish', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  hasCommonDependency: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 });
 
 module.exports = Dish;

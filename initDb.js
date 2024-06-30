@@ -1,9 +1,9 @@
-const { sequelize, Dish, MenuItem } = require('./models');
+const { Dish, MenuItem, syncModels } = require('./models');
 const { createUser } = require('./auth/auth');
 
 async function initDb() {
   try {
-    await sequelize.sync({ alter: true });
+    await syncModels();
     console.log('Database sincronizzato e alterato con successo.');
 
     // Create users as before...
@@ -26,6 +26,9 @@ async function initDb() {
       { nome: 'Pizza Margherita', prezzo: 8.5, quantita: 50, categoria: 'Pizze' },
       { nome: 'Pasta al Pomodoro', prezzo: 7.0, quantita: 30, categoria: 'Primi' },
       { nome: 'Insalata Mista', prezzo: 5.0, quantita: 40, categoria: 'Contorni' },
+      { nome: 'Fegatelli', prezzo: 6, quantita: 10, categoria: 'Secondi' },
+      { nome: 'Pancetta', prezzo: 3, quantita: 20, categoria: 'Secondi' },
+      { nome: 'Salsiccia', prezzo: 5, quantita: 10, categoria: 'Secondi' },
     ]);
     console.log('Menu items di esempio creati con successo.');
 
