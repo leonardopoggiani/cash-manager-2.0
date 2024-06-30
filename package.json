@@ -36,6 +36,9 @@
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "better-sqlite3": "^11.1.1",
+    "dexie": "^4.0.7",
+    "node-discover": "^1.2.1",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7"
   }

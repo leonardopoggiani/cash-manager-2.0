@@ -1,15 +1,28 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const sequelize = require('./database/database');
 const { authenticateUser } = require('./auth/auth');
-const { Dish, MenuItem, DishMenuItem, checkAssociations, Order, OrderItem } = require('./models');
+const {
+  Dish,
+  MenuItem,
+  DishMenuItem,
+  checkAssociations,
+  Order,
+  OrderItem,
+  syncModels,
+  SyncLog,
+} = require('./models');
+const Discover = require('node-discover');
 
 let mainWindow;
 let currentUser = null;
+let discover;
 
-function createWindow() {
+async function createWindow() {
+  await syncModels();
+
   mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width: 800,
+    height: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -17,6 +30,23 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+
+  discover = Discover();
+
+  discover.on('promotion', () => {
+    console.log('This node became the master.');
+    startSync();
+  });
+
+  discover.on('demotion', () => {
+    console.log('This node is no longer the master.');
+    stopSync();
+  });
+
+  discover.on('added', (node) => {
+    console.log('A new node has been added:', node.address);
+    syncWith(node);
+  });
 }
 
 app.whenReady().then(async () => {
@@ -24,6 +54,11 @@ app.whenReady().then(async () => {
     await checkAssociations();
     await sequelize.authenticate();
     console.log('Connessione al database stabilita con successo.');
+
+    app.on('activate', function () {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+
     createWindow();
   } catch (error) {
     console.error('Impossibile connettersi al database:', error);
@@ -349,9 +384,11 @@ ipcMain.handle('submitOrder', async (event, orderData) => {
       throw new Error('Order total mismatch');
     }
 
+    await updateInventoryForOrder(orderData.items, t);
+
     const order = await Order.create(
       {
-        total: calculatedTotal, // Use the recalculated total
+        total: calculatedTotal,
         status: 'pending',
         date: new Date(),
       },
@@ -378,6 +415,7 @@ ipcMain.handle('submitOrder', async (event, orderData) => {
     return { success: false, error: error.message };
   }
 });
+
 ipcMain.handle('getOrders', async () => {
   try {
     const orders = await Order.findAll({
@@ -430,6 +468,170 @@ ipcMain.handle('getDishes', async () => {
     return dishes.map((dish) => dish.toJSON());
   } catch (error) {
     console.error('Error fetching dishes:', error);
-    return [];
+    throw error;
+  }
+});
+
+async function updateInventoryForOrder(orderItems, t) {
+  for (const item of orderItems) {
+    const dish = await Dish.findByPk(item.id, { transaction: t });
+    if (!dish) {
+      throw new Error(`Dish with id ${item.id} not found`);
+    }
+
+    const dishMenuItems = await DishMenuItem.findAll({
+      where: { DishId: dish.id },
+      transaction: t,
+    });
+
+    for (const dishMenuItem of dishMenuItems) {
+      const menuItem = await MenuItem.findByPk(dishMenuItem.MenuItemId, { transaction: t });
+      if (!menuItem) {
+        throw new Error(`MenuItem with id ${dishMenuItem.MenuItemId} not found`);
+      }
+
+      const quantityToReduce = dishMenuItem.quantita * item.quantity;
+      if (menuItem.quantita < quantityToReduce) {
+        throw new Error(`Insufficient inventory for ${menuItem.nome}`);
+      }
+
+      menuItem.quantita -= quantityToReduce;
+      await menuItem.save({ transaction: t });
+    }
+  }
+}
+
+async function checkInventoryForOrder(orderItems) {
+  for (const item of orderItems) {
+    const dish = await Dish.findByPk(item.id);
+    if (!dish) {
+      throw new Error(`Dish with id ${item.id} not found`);
+    }
+
+    const dishMenuItems = await DishMenuItem.findAll({
+      where: { DishId: dish.id },
+      include: [MenuItem],
+    });
+
+    for (const dishMenuItem of dishMenuItems) {
+      const quantityNeeded = dishMenuItem.quantita * item.quantity;
+      if (dishMenuItem.MenuItem.quantita < quantityNeeded) {
+        throw new Error(`Insufficient inventory for ${dishMenuItem.MenuItem.nome}`);
+      }
+    }
+  }
+}
+
+ipcMain.handle('checkInventoryForOrder', async (event, orderItems) => {
+  try {
+    await checkInventoryForOrder(orderItems);
+    return { success: true };
+  } catch (error) {
+    console.error('Inventory check failed:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Sync-related functions
+async function startSync() {
+  console.log('Starting sync as master.');
+  // Implement master sync logic here
+}
+
+async function stopSync() {
+  console.log('Stopping sync, no longer master.');
+  // Implement logic to stop sync here
+}
+
+async function syncWith(node) {
+  console.log('Syncing with node:', node.address);
+  const lastSync = await getLastSyncTime(node.address);
+  const changes = await getChanges(lastSync);
+  node.send('sync-request', changes);
+}
+
+async function getLastSyncTime(nodeAddress) {
+  const syncLog = await SyncLog.findOne({ where: { node_address: nodeAddress } });
+  return syncLog ? syncLog.last_sync : new Date(0); // Return Unix epoch if no sync log found
+}
+
+async function getChanges(since) {
+  const changes = {
+    dishes: await Dish.findAll({ where: { updated_at: { [sequelize.Op.gt]: since } } }),
+    menuItems: await MenuItem.findAll({ where: { updated_at: { [sequelize.Op.gt]: since } } }),
+    orders: await Order.findAll({ where: { updated_at: { [sequelize.Op.gt]: since } } }),
+    orderItems: await OrderItem.findAll({ where: { updated_at: { [sequelize.Op.gt]: since } } }),
+  };
+  return changes;
+}
+
+async function applyChanges(changes) {
+  const t = await sequelize.transaction();
+
+  try {
+    for (const [model, items] of Object.entries(changes)) {
+      switch (model) {
+        case 'dishes':
+          await Dish.bulkCreate(items, {
+            updateOnDuplicate: [
+              'nome',
+              'prezzo',
+              'categoria',
+              'disponibile',
+              'descrizione',
+              'hasCommonDependency',
+              'updated_at',
+            ],
+            transaction: t,
+          });
+          break;
+        case 'menuItems':
+          await MenuItem.bulkCreate(items, {
+            updateOnDuplicate: ['nome', 'prezzo', 'quantita', 'categoria', 'updated_at'],
+            transaction: t,
+          });
+          break;
+        case 'orders':
+          await Order.bulkCreate(items, {
+            updateOnDuplicate: ['status', 'total', 'date', 'updated_at'],
+            transaction: t,
+          });
+          break;
+        case 'orderItems':
+          await OrderItem.bulkCreate(items, {
+            updateOnDuplicate: ['quantity', 'price', 'updated_at'],
+            transaction: t,
+          });
+          break;
+      }
+    }
+    await t.commit();
+  } catch (error) {
+    await t.rollback();
+    console.error('Error applying changes:', error);
+    throw error;
+  }
+}
+
+ipcMain.on('sync-request', async (event, changes) => {
+  try {
+    await applyChanges(changes);
+    event.reply('sync-response', { success: true });
+  } catch (error) {
+    console.error('Error applying changes:', error);
+    event.reply('sync-response', { success: false, error: error.message });
+  }
+});
+
+ipcMain.handle('manualSync', async () => {
+  try {
+    const nodes = discover.getPeers();
+    for (const node of nodes) {
+      await syncWith(node);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Error during manual sync:', error);
+    return { success: false, error: error.message };
   }
 });

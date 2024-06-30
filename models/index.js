@@ -4,6 +4,7 @@ const MenuItem = require('./MenuItem');
 const DishMenuItem = require('./DishMenuItem');
 const Order = require('./Order')(sequelize);
 const OrderItem = require('./OrderItem')(sequelize);
+const SyncLog = require('./SyncLog')(sequelize);
 
 // Existing associations
 Dish.belongsToMany(MenuItem, {
@@ -90,6 +91,7 @@ module.exports = {
   DishMenuItem,
   Order,
   OrderItem,
+  SyncLog,
   syncModels,
   checkAssociations,
 };

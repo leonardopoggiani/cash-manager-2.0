@@ -5,7 +5,13 @@ let currentOrder = [];
 async function initializeOrdini() {
   console.log('Initializing Ordini module');
 
+  createOrderUI();
+
+  const addToOrderBtn = document.getElementById('addToOrderBtn');
   const submitOrderBtn = document.getElementById('submitOrderBtn');
+
+  // Load dishes
+  loadDishes();
 
   const itemQuantityInput = document.getElementById('itemQuantity');
   itemQuantityInput.addEventListener('change', (event) => {
@@ -18,7 +24,6 @@ async function initializeOrdini() {
   const dishes = await ipcRenderer.invoke('getDishes');
   populateDishSelect(dishes);
 
-  const addToOrderBtn = document.getElementById('addToOrderBtn');
   addToOrderBtn.addEventListener('click', (event) => {
     event.preventDefault();
     addItemToOrder();
@@ -27,6 +32,15 @@ async function initializeOrdini() {
   submitOrderBtn.addEventListener('click', submitOrder);
 
   loadOrders();
+}
+
+async function loadDishes() {
+  try {
+    const dishes = await ipcRenderer.invoke('getDishes');
+    populateDishSelect(dishes);
+  } catch (error) {
+    console.error('Error loading dishes:', error);
+  }
 }
 
 function populateDishSelect(dishes) {
@@ -90,52 +104,24 @@ function addItemToOrder() {
   }
 }
 
-function updateOrderDisplay() {
-  const orderItems = document.getElementById('orderItems');
-  const orderTotal = document.getElementById('orderTotal');
-
-  orderItems.innerHTML = '';
-  let total = 0;
-
-  currentOrder.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.textContent = `${item.name} x${item.quantity} - €${(item.price * item.quantity).toFixed(2)}`;
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = 'Rimuovi';
-    removeBtn.onclick = () => removeItemFromOrder(index);
-    li.appendChild(removeBtn);
-    orderItems.appendChild(li);
-
-    total += item.price * item.quantity;
-  });
-
-  orderTotal.textContent = total.toFixed(2);
-}
-
-function removeItemFromOrder(index) {
-  currentOrder.splice(index, 1);
-  updateOrderDisplay();
-}
-
 async function submitOrder() {
   if (currentOrder.length === 0) {
     alert("Aggiungi almeno un piatto all'ordine prima di inviarlo.");
     return;
   }
 
-  const total = currentOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  if (isNaN(total) || total <= 0) {
-    alert("Errore nel calcolo del totale dell'ordine. Controlla i prezzi e le quantità.");
-    return;
-  }
-
-  const order = {
-    items: currentOrder,
-    total: total,
-  };
-
   try {
+    const inventoryCheck = await ipcRenderer.invoke('checkInventoryForOrder', currentOrder);
+    if (!inventoryCheck.success) {
+      alert(`Errore nell'inventario: ${inventoryCheck.error}`);
+      return;
+    }
+
+    const order = {
+      items: currentOrder,
+      total: currentOrder.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    };
+
     const result = await ipcRenderer.invoke('submitOrder', order);
     if (result.success) {
       alert(`Ordine #${result.orderId} inviato con successo!`);
@@ -222,7 +208,45 @@ async function updateOrderStatus(orderId, status) {
     alert(`Errore nell'aggiornamento dello stato dell'ordine: ${error.message}`);
   }
 }
-1;
+
+function createOrderUI() {
+  const orderForm = document.getElementById('newOrderForm');
+  orderForm.innerHTML = `
+    <h3>Nuovo Ordine</h3>
+    <div class="order-form-grid">
+      <select id="dishSelect"></select>
+      <input type="number" id="itemQuantity" min="1" value="1" step="1">
+      <button id="addToOrderBtn">Aggiungi</button>
+    </div>
+    <div id="currentOrderItems"></div>
+    <div class="order-summary">
+      <span>Totale: €<span id="orderTotal">0.00</span></span>
+      <button id="submitOrderBtn">Invia Ordine</button>
+    </div>
+  `;
+}
+
+function updateOrderDisplay() {
+  const currentOrderItems = document.getElementById('currentOrderItems');
+  const orderTotal = document.getElementById('orderTotal');
+
+  currentOrderItems.innerHTML = '';
+  let total = 0;
+
+  currentOrder.forEach((item, index) => {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'order-item';
+    itemElement.innerHTML = `
+      <span>${item.name} x${item.quantity}</span>
+      <span>€${(item.price * item.quantity).toFixed(2)}</span>
+      <button class="remove-item" data-index="${index}">Rimuovi</button>
+    `;
+    currentOrderItems.appendChild(itemElement);
+    total += item.price * item.quantity;
+  });
+
+  orderTotal.textContent = total.toFixed(2);
+}
 
 module.exports = {
   initializeOrdini,
