@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Manager 2.0 - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+  <body>
+    <h1>Dashboard Cash Manager 2.0</h1>
+    <div id="userInfo"></div>
+    <nav>
+      <button id="ordiniBtn">Gestione Ordini</button>
+      <button id="menuBtn">Gestione Menu</button>
+      <button id="magazzinoBtn">Magazzino</button>
+      <button id="statisticheBtn">Statistiche</button>
+      <button id="logoutBtn">Logout</button>
+    </nav>
+    <div id="content">
+      <div id="magazzinoModule" style="display:none;">
+        <h2>Gestione Magazzino</h2>
+        <form id="addItemForm">
+          <input type="text" id="itemName" placeholder="Nome articolo" required />
+          <input type="number" id="itemPrice" placeholder="Prezzo" step="0.01" required />
+          <input type="number" id="itemQuantity" placeholder="Quantità" required />
+          <select id="itemCategory" required>
+            <option value="">Seleziona categoria</option>
+          </select>
+          <button type="submit">Aggiungi Articolo</button>
+        </form>
+        <form id="updateQuantityForm">
+          <select id="updateItemSelect" required>
+            <option value="">Seleziona articolo</option>
+          </select>
+          <input type="number" id="updateItemQuantity" placeholder="Nuova quantità" required />
+          <button type="submit">Aggiorna Quantità</button>
+        </form>
+        <h3>Inventario</h3>
+        <button id="refreshInventoryBtn">Aggiorna Inventario</button>
+        <div id="inventoryContainer"></div>
+    </div>
+    <script src="mainWindow.js"></script>
+  </body>
+</html>

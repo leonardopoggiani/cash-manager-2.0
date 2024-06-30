@@ -1,0 +1,42 @@
+{
+  "name": "cash-manager-2.0",
+  "version": "1.0.0",
+  "description": "Applicazione per la gestione degli ordini per Rock For Life",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "author": "Leonardo Poggiani",
+  "license": "UNLICENSED",
+  "private": true,
+  "build": {
+    "appId": "it.rockforlife.cashmanager",
+    "productName": "Cash Manager 2.0",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.6.0",
+    "electron": "latest",
+    "electron-builder": "latest",
+    "eslint": "^9.6.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "globals": "^15.6.0",
+    "prettier": "^3.3.2"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7"
+  }
+}

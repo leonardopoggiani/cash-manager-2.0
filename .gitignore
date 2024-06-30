@@ -1,1 +1,4 @@
 .trunk
+
+# Node.js
+node_modules
